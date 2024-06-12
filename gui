@@ -1,0 +1,59 @@
+import curses
+
+def main(stdscr):
+    # Clear screen and set up some basic settings
+    stdscr.clear()
+    stdscr.nodelay(1)
+    curses.curs_set(0)
+    stdscr.addstr(0, 2, "Calm", curses.A_BOLD)
+    stdscr.addstr(1, 2, "Calm")
+    stdscr.addstr(2, 2, "Calm")
+    stdscr.addstr(4, 2, "Emergencia", curses.A_BOLD)
+    stdscr.addstr(5, 2, "Ingresar")
+
+    # Initialize input variables
+    full_name = ""
+    password = ""
+    input_mode = False
+
+    # Main event loop
+    while True:
+        key = stdscr.getch()
+
+        if key == curses.KEY_UP and input_mode:
+            if len(password) > 0:
+                password = password[:-1]
+                stdscr.addstr(6, 25, password)
+        elif key == curses.KEY_DOWN and input_mode:
+            password += "•"
+            stdscr.addstr(6, 25, password)
+        elif key == curses.KEY_BACKSPACE and input_mode:
+            if len(full_name) > 0:
+                full_name = full_name[:-1]
+                stdscr.addstr(3, 10, full_name)
+        elif key == 10 and input_mode:
+            input_mode = False
+            stdscr.addstr(8, 2, "Confirmed")
+        elif key == 10:
+            input_mode = True
+            stdscr.addstr(6, 25, "")
+        elif key == ord('q'):
+            break
+        else:
+            if input_mode:
+                if len(full_name) < 20:
+                    full_name += chr(key)
+                    stdscr.addstr(3, 10, full_name)
+            else:
+                if key == curses.KEY_RIGHT and len(full_name) > 0:
+                    input_mode = True
+                    stdscr.addstr(6, 25, "*")
+
+        # Refresh the screen
+        stdscr.refresh()
+
+    # Close the window
+    curses.endwin()
+
+if __name__ == "__main__":
+    curses.wrapper(main)

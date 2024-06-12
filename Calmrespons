@@ -1,0 +1,95 @@
+import clasificacion_emociones as ce
+#import entrenamiento_modelo as em
+import keras
+import recomendaciones as re
+import pandas as pd
+import joblib
+from sklearn.feature_extraction.text import HashingVectorizer
+from keras_preprocessing.text import Tokenizer
+
+tokenizer = Tokenizer()
+
+def boton_emergencia():
+    texto = input("**Cuéntame cómo te sientes:** ")
+    emocion_predicha = ce.clasificar_emocion(texto)
+
+    print("**Estamos enlazando con un especialista.**")
+
+    # Obtener la recomendación
+    recomendacion = re.generar_recomendacion(emocion_predicha)
+    print(f"Recomendación: {recomendacion}")
+
+    # Guardar la respuesta
+    guardar_respuesta_csv(texto, emocion_predicha)
+
+    return emocion_predicha
+
+def boton_encuesta():
+    print("**Encuesta de salud mental**")
+    print("Responde las siguientes preguntas con 'sí' o 'no'.")
+
+    preguntas = [
+        "¿Has experimentado cambios en tu apetito últimamente?",
+        "¿Has tenido problemas para conciliar el sueño o has dormido demasiado?",
+        "¿Te has sentido constantemente preocupado o nervioso?",
+        "¿Has perdido interés en actividades que solías disfrutar?",
+        "¿Has tenido pensamientos recurrentes sobre la muerte o el suicidio?"
+    ]
+
+    respuestas = []
+    for pregunta in preguntas:
+        respuesta = input(f"{pregunta} (sí/no): ").lower()
+        while respuesta not in ["sí", "no"]:
+            print("Por favor, responde con 'sí' o 'no'.")
+            respuesta = input(f"{pregunta} (sí/no): ").lower()
+        respuestas.append(respuesta)
+
+    # Evaluar las respuestas
+    if "sí" in respuestas[-1]:
+        recomendacion = "Necesita una cita prioritaria de salud mental. Por favor, programe una cita lo antes posible."
+    elif "sí" in respuestas[:2]:
+        recomendacion = "Necesita una cita de salud mental en los próximos dos o tres días."
+    else:
+        recomendacion = "Puede esperar un poco más, pero no dude en buscar ayuda si sus síntomas empeoran."
+
+    print("Recomendación:", recomendacion)
+
+def guardar_respuesta_csv(texto, emocion_predicha):
+    try:
+        # Crear o cargar el archivo CSV
+        df = pd.read_csv("respuestas_emergencia.csv")
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=["Texto", "Emocion"])
+
+    # Agregar la nueva respuesta al DataFrame
+    nueva_fila = {"Texto": texto, "Emocion": emocion_predicha}
+    df = df.append(nueva_fila, ignore_index=True)
+    # Guardar el DataFrame en el archivo CSV
+    try:
+        df.to_csv("respuestas_emergencia.csv", index=False)
+    except Exception as e:
+        print(f"Error al guardar la respuesta: {e}")
+
+def main():
+    while True:
+        print("**Botón de emergencia:**")
+        print("**Botón de encuesta:**")
+
+        opcion = input("¿Qué botón desea presionar? (emergencia/encuesta): ")
+
+        # Validación de la entrada
+        if opcion not in ("emergencia", "encuesta"):
+            print("Opción no válida. Debe elegir 'emergencia' o 'encuesta'.")
+            continue
+        
+        # Se sale del bucle si la entrada es válida
+        break
+
+    if opcion == "emergencia":
+        respuestas_emergencia = boton_emergencia()
+
+    elif opcion == "encuesta":
+        boton_encuesta()
+
+if __name__ == "__main__":
+    main()
